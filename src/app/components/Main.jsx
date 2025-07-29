@@ -73,7 +73,7 @@ export default function Main() {
                 const result = await response.json();
                 if (response.ok) {
                     alert('Task deleted successfully');
-                    refreshTask(); // Call the refreshTask function once
+                    refreshTask(token); // Call the refreshTask function with token
                 } else {
                     alert('Failed to delete task: ' + result.message);
                 }

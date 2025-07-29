@@ -18,14 +18,19 @@ export const DataProvider = ({ children }) => {
     const [task, setTask] = useState([])
     const [isLoading, setIsLoading] = useState(true); // New loading state
 
-const refreshTask = async () => {
+const refreshTask = async (currentToken) => { // Accept token as argument
+    if (!currentToken) {
+        console.log("refreshTask: No token provided, skipping fetch.");
+        return;
+    }
     try {
         const response = await fetch('/api/getTask', {
             method: 'GET', // Changed to GET
             headers: {
-                'Authorization': `Bearer ${token}` // Send token in Authorization header
+                'Authorization': `Bearer ${currentToken}` // Use currentToken
             }
         });
+        console.log("Fetching tasks with token:", currentToken); // Add this line for debugging
         const data = await response.json();
         if (response.ok) {
             if (Array.isArray(data)) {
@@ -48,12 +53,21 @@ const refreshTask = async () => {
         if (storedToken) {
             setIsToken(true);
             setToken(storedToken);
+            console.log("Token loaded from localStorage:", storedToken); // Log when token is set
         } else {
             setIsToken(false);
             setToken(""); // Ensure token is empty if not present
+            console.log("No token found in localStorage.");
         }
         setIsLoading(false); // Set loading to false after initial check
     }, []); // Run only once on mount to load token from localStorage
+
+    // Add another useEffect to call refreshTask when token changes
+    useEffect(() => {
+        if (token) {
+            refreshTask(token);
+        }
+    }, [token, refreshTasks]); // Depend on token and refreshTasks
 
     const UpdateSubmit = async (e) => {
         e.preventDefault();
@@ -66,6 +80,7 @@ const refreshTask = async () => {
                 },
                 body: JSON.stringify(toUpdate) // toUpdate already contains _id, title, description, date, status
             });
+            console.log("Updating task with token:", token); // Add this line for debugging
             const data = await response.json();
             if (response.ok) {
                 alert("Task updated successfully!");

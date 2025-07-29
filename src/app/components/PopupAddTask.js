@@ -32,7 +32,7 @@ export default function PopupAddTask() {
             if (result.success) {
                 alert("Task added successfully!");
                setAddTask(false); // Close the popup
-               refreshTask()
+               refreshTask(token) // Call refreshTask with token
             } else {
                 alert("Failed to add task: " + result.message);
             }
