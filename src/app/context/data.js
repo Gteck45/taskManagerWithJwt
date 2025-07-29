@@ -18,27 +18,34 @@ export const DataProvider = ({ children }) => {
     const [task, setTask] = useState([])
     const [isLoading, setIsLoading] = useState(true); // New loading state
 
-const refreshTask=() => {
-     fetch('/api/getTask', {
-            method: 'POST',
+const refreshTask = async () => {
+    try {
+        const response = await fetch('/api/getTask', {
+            method: 'GET', // Changed to GET
             headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token })
-        }).then(res => res.json()).then(data => {
-            if (Array.isArray(data)) {
-                setTask(data)
-            } else {
-                setTask([])
+                'Authorization': `Bearer ${token}` // Send token in Authorization header
             }
-        }).catch(error => {
-            console.error('Error fetching tasks:', error);
+        });
+        const data = await response.json();
+        if (response.ok) {
+            if (Array.isArray(data)) {
+                setTask(data);
+            } else {
+                setTask([]);
+            }
+        } else {
+            console.error('Failed to fetch tasks:', data.message);
             setTask([]);
-        })
-}
-    useEffect(()=>{
+        }
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+        setTask([]);
+    }
+};
+
+    useEffect(() => {
         const storedToken = localStorage.getItem('token');
-        if(storedToken){
+        if (storedToken) {
             setIsToken(true);
             setToken(storedToken);
         } else {
@@ -46,32 +53,33 @@ const refreshTask=() => {
             setToken(""); // Ensure token is empty if not present
         }
         setIsLoading(false); // Set loading to false after initial check
-    },[]) // Run only once on mount to load token from localStorage
+    }, []); // Run only once on mount to load token from localStorage
 
     const UpdateSubmit = async (e) => {
-    e.preventDefault()
-    try {
-        const response = await fetch('/api/getTask', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token, ...toUpdate })
-        });
-        const data = await response.json();
-        if (response.ok) {
-            // alert("Task updated successfully!");
-            setenablePopup(false);
-            refreshTask()
-            setRefreshTasks(prev => !prev); // Toggle to trigger re-fetch in Main.jsx
-        } else {
-            alert("Error updating task: Unknown error occurred");
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/getTask', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Send token in Authorization header
+                },
+                body: JSON.stringify(toUpdate) // toUpdate already contains _id, title, description, date, status
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert("Task updated successfully!");
+                setenablePopup(false);
+                refreshTask();
+                setRefreshTasks(prev => !prev); // Toggle to trigger re-fetch in Main.jsx
+            } else {
+                alert("Error updating task: " + (data.message || "Unknown error occurred"));
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error updating task: Please try again.");
         }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Error updating task: Unknown error occurred");
-    }
-}
+    };
 
 
 

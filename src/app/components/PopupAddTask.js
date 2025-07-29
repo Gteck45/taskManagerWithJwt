@@ -24,8 +24,9 @@ export default function PopupAddTask() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Send token in Authorization header
                 },
-                body: JSON.stringify({ token, ...formData })
+                body: JSON.stringify(formData) // formData already contains title, date, description
             });
             const result = await response.json();
             if (result.success) {

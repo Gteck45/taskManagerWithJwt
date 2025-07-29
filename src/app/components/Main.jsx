@@ -19,23 +19,34 @@ export default function Main() {
 
     useEffect(() => {
         if (!token) return; // Prevent fetch if no token
-        fetch('/api/getTask', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token })
-        }).then(res => res.json()).then(data => {
-            if (Array.isArray(data)) {
-                setTask(data)
-            } else {
-                setTask([])
+
+        const fetchTasks = async () => {
+            try {
+                const response = await fetch('/api/getTask', {
+                    method: 'GET', // Changed to GET
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Send token in Authorization header
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (Array.isArray(data)) {
+                        setTask(data);
+                    } else {
+                        setTask([]);
+                    }
+                } else {
+                    console.error('Failed to fetch tasks:', data.message);
+                    setTask([]);
+                }
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+                setTask([]);
             }
-        }).catch(error => {
-            console.error('Error fetching tasks:', error);
-            setTask([]);
-        })
-    }, [refreshTasks, token]) // Use refreshTasks instead of UpdateSubmit
+        };
+
+        fetchTasks();
+    }, [refreshTasks, token]);
 
     const handlePopEdit = (item) => {
         setToUpdate({
@@ -44,27 +55,34 @@ export default function Main() {
             description: item.description,
             date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
             status: item.status
-        })
-        setenablePopup(true)
-    }
+        });
+        setenablePopup(true);
+    };
 
     const handleDelete = async (item) => {
         if (window.confirm("Are you sure you want to delete this task?")) {
             try {
-                await fetch(`/api/getTask`, {
+                const response = await fetch(`/api/getTask`, {
                     method: 'DELETE',
                     headers: {
-                        'content-Type': `application/json`
+                        'Content-Type': `application/json`,
+                        'Authorization': `Bearer ${token}` // Send token in Authorization header
                     },
-                body: JSON.stringify({ token, _id: item._id })
+                    body: JSON.stringify({ _id: item._id }) // Only send _id in body
                 });
-                alert('Task deleted successfully');
-                refreshTask(); // Call the refreshTask function once
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Task deleted successfully');
+                    refreshTask(); // Call the refreshTask function once
+                } else {
+                    alert('Failed to delete task: ' + result.message);
+                }
             } catch (error) {
                 console.error('Error deleting task:', error);
+                alert('Failed to delete task. Please try again.');
             }
         }
-    }
+    };
     return (<>{
         isToken &&
         <main className="bg-gradient-to-br from-stone-100 to-stone-300 w-full min-h-[97vh] p-6">

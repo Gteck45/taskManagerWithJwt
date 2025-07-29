@@ -21,8 +21,10 @@ const taskSchema = new mongoose.Schema({
         default: 'pending',
         enum: ['pending', 'in progress', 'completed']
     },
-    createdBy:{
-        type:String,
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Signup', // Reference to the Signup model
+        required: true // Assuming a task must be created by a registered user
     }
 });
 
